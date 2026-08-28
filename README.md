@@ -1,5 +1,7 @@
 # Cala Montgó Window — Webcam Archiver
 
+Archiving public webcam frames of Cala Montgó, Costa Brava.
+
 Archives a public webcam feed of Cala Montgó (Costa Brava, Spain) every ~5
 minutes, via a scheduled GitHub Actions workflow. This is Phase 1 of a
 longer-term project (a physical display showing this feed at home); the
