@@ -1,9 +1,9 @@
-# Runs on a 5-minute schedule; also supports manual dispatch.
+# Runs on an hourly schedule; also supports manual dispatch.
 name: Capture webcam frame
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch: {}
 
 permissions:
