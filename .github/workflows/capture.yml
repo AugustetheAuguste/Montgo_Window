@@ -27,6 +27,9 @@ jobs:
       - name: Run capture script
         run: python scripts/capture.py
 
+      - name: Ensure log files exist
+        run: touch metadata.jsonl failures.jsonl
+
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
