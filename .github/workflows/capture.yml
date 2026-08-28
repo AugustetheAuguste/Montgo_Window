@@ -1,3 +1,4 @@
+# Runs on a 5-minute schedule; also supports manual dispatch.
 name: Capture webcam frame
 
 on:
