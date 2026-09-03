@@ -17,12 +17,12 @@ grab them before you forget:
 ```
 git clone https://github.com/AugustetheAuguste/Montgo_Window.git /tmp/old-archive
 cd /tmp/old-archive
-git checkout <commit-before-this-migration> -- images metadata.jsonl failures.jsonl
+git checkout 917c98f -- images metadata.jsonl failures.jsonl
 ```
 
-Use the last commit before this migration's commit (check `git log
---oneline` for the one still titled "Capture webcam frame"). You'll copy
-`images/`, `metadata.jsonl`, and `failures.jsonl` from there into
+`917c98f` is the last "Capture webcam frame" commit before this
+migration's commit — the full archive as of the last workflow run. You'll
+copy `images/`, `metadata.jsonl`, and `failures.jsonl` from there into
 `data/webcam-montgo/` in step 3, so the new setup continues the archive
 rather than starting over.
 
