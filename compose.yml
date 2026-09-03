@@ -1,0 +1,21 @@
+services:
+  webcam-montgo:
+    build:
+      context: ..
+      dockerfile: webcam-montgo/Dockerfile
+    container_name: proj-webcam-montgo
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      - TZ=Europe/Madrid
+      - HOST_NAME=matebook
+    volumes:
+      - ../data/webcam-montgo:/data
+    labels:
+      homeserver.project: "webcam-montgo"
+      homeserver.role: "capture"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
