@@ -41,6 +41,22 @@ def _derive_state(consecutive_failures: int, stopped: bool, started: bool) -> st
     return "failing"
 
 
+def _redact_url(text: str, url: str) -> str:
+    """Replace every recognisable fragment of HEARTBEAT_URL with a placeholder.
+
+    String operations only, so no import is added.
+    """
+    if not url:
+        return text
+    bare = url.split("://", 1)[-1]  # host[:port]/path/<token>
+    host = bare.split("/", 1)[0]  # host[:port] on its own
+    token = bare.rsplit("/", 1)[-1]  # push token, if the URL ends in one
+    for needle in (url, bare, host, token):
+        if needle and len(needle) >= 4:  # never substitute trivially short strings
+            text = text.replace(needle, "<HEARTBEAT_URL>")
+    return text
+
+
 class StatusReporter:
     """Tracks and persists status.json for one project, per schema v1."""
 
@@ -61,6 +77,9 @@ class StatusReporter:
         self.process_started_utc = _now_iso()
         self._have_run_cycle = False
         self._stopped = False
+        # Last metrics handed to report_*, re-written verbatim on SIGTERM.
+        # Initialised to {} so a SIGTERM before any report still writes a valid object.
+        self._last_metrics: dict[str, Any] = {}
 
         # Reload lifetime counters so a restart doesn't erase history (§2.2 rule 2).
         existing = self._read_existing()
@@ -81,11 +100,12 @@ class StatusReporter:
 
     def _handle_sigterm(self, signum, frame) -> None:
         self._stopped = True
-        self._write(next_run_utc=None, metrics={})
+        self._write(next_run_utc=None, metrics=dict(getattr(self, "_last_metrics", {}) or {}))
         raise SystemExit(0)
 
     def report_success(self, next_run_utc: str | None, metrics: dict[str, Any]) -> None:
         now = _now_iso()
+        self._last_metrics = dict(metrics or {})  # shallow copy: immune to later caller mutation
         self._have_run_cycle = True
         self.consecutive_failures = 0
         self.counters["attempts"] += 1
@@ -97,6 +117,7 @@ class StatusReporter:
 
     def report_failure(self, error: str, next_run_utc: str | None, metrics: dict[str, Any]) -> None:
         now = _now_iso()
+        self._last_metrics = dict(metrics or {})
         self._have_run_cycle = True
         self.consecutive_failures += 1
         self.counters["attempts"] += 1
@@ -154,6 +175,9 @@ class StatusReporter:
         try:
             with urllib.request.urlopen(url, timeout=10):
                 pass
-        except Exception:
-            # A failed heartbeat must never crash the project or spam logs (§2.7).
-            pass
+        except Exception as exc:
+            # A failed heartbeat must never crash the project (§2.7): log one
+            # redacted line and continue, never re-raise.
+            detail = f"{type(exc).__name__}: {_redact_url(str(exc), url)}"
+            print(f"[{_now_iso()}] heartbeat failed: {detail}", flush=True)
+            return
